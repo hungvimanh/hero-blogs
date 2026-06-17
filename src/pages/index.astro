@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import PostCard from '../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+const latestPosts = allPosts
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 4);
+---
+
+<Base title="herommt">
+  <Hero />
+
+  {latestPosts.length > 0 && (
+    <section class="max-w-content mx-auto px-4 sm:px-6 pb-20">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+          Bài viết gần đây
+        </h2>
+        <a href="/blog" class="text-sm text-accent hover:underline font-medium">
+          Xem tất cả →
+        </a>
+      </div>
+
+      <!-- Featured first post -->
+      {latestPosts[0] && (
+        <div class="mb-4">
+          <PostCard post={latestPosts[0]} featured />
+        </div>
+      )}
+
+      <!-- Remaining posts grid -->
+      {latestPosts.length > 1 && (
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {latestPosts.slice(1).map(post => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      )}
+    </section>
+  )}
+</Base>

@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const tags = [...new Set(posts.flatMap(p => p.data.tags))];
+  return tags.map(tag => ({
+    params: { tag: tag.toLowerCase().replace(/\s+/g, '-') },
+    props: {
+      tag,
+      posts: posts
+        .filter(p => p.data.tags.includes(tag))
+        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`Tag: ${tag}`} description={`Các bài viết về ${tag}`}>
+  <div class="max-w-content mx-auto px-4 sm:px-6 py-12 sm:py-16">
+    <header class="mb-10">
+      <a href="/blog" class="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors mb-4 inline-block">
+        ← Tất cả bài viết
+      </a>
+      <div class="flex items-center gap-3">
+        <h1 class="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          {tag}
+        </h1>
+        <span class="text-sm text-zinc-400 dark:text-zinc-500 font-mono">
+          {posts.length} bài
+        </span>
+      </div>
+    </header>
+
+    <div class="space-y-4">
+      {posts.map(post => <PostCard post={post} />)}
+    </div>
+  </div>
+</Base>

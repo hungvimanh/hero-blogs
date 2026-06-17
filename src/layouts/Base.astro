@@ -1,0 +1,57 @@
+---
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  article?: boolean;
+}
+
+const {
+  title,
+  description = 'Blog về kiến trúc phần mềm, tư duy hệ thống và những bài học thực tế.',
+  thumbnail,
+  article = false,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImage = thumbnail
+  ? new URL(thumbnail, Astro.site).href
+  : new URL('/og-default.jpg', Astro.site).href;
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    <title>{title === 'herommt' ? 'herommt' : `${title} — herommt`}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <!-- Prevent FOIT on theme switch -->
+    <script is:inline>
+      const t = localStorage.getItem('theme') ?? 'dark';
+      document.documentElement.classList.toggle('dark', t !== 'light');
+    </script>
+  </head>
+  <body class="bg-stone-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-200">
+    <Nav />
+    <main class="min-h-[calc(100dvh-7rem)]">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

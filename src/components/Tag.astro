@@ -1,0 +1,17 @@
+---
+interface Props {
+  name: string;
+  href?: string;
+}
+
+const { name, href } = Astro.props;
+const url = href ?? `/tags/${name.toLowerCase().replace(/\s+/g, '-')}`;
+---
+
+<a
+  href={url}
+  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+    bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+>
+  {name}
+</a>

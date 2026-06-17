@@ -1,0 +1,78 @@
+---
+import Tag from './Tag.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+  featured?: boolean;
+}
+
+const { post, featured = false } = Astro.props;
+const { title, date, description, tags, thumbnail } = post.data;
+const slug = post.slug;
+
+const formattedDate = new Intl.DateTimeFormat('vi-VN', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+}).format(date);
+---
+
+<article class:list={[
+  'group flex flex-col border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden',
+  'hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-200',
+  featured && 'sm:flex-row',
+]}>
+  {thumbnail && (
+    <a
+      href={`/blog/${slug}`}
+      class:list={[
+        'block overflow-hidden bg-zinc-100 dark:bg-zinc-900 shrink-0',
+        featured ? 'sm:w-80' : 'w-full',
+      ]}
+    >
+      <img
+        src={thumbnail}
+        alt={title}
+        class:list={[
+          'w-full object-cover group-hover:scale-[1.02] transition-transform duration-500',
+          featured ? 'h-48 sm:h-full' : 'h-48',
+        ]}
+        loading="lazy"
+      />
+    </a>
+  )}
+
+  <div class="flex flex-col p-5 sm:p-6 flex-1">
+    {tags.length > 0 && (
+      <div class="flex flex-wrap gap-1.5 mb-3">
+        {tags.map(tag => <Tag name={tag} />)}
+      </div>
+    )}
+
+    <a href={`/blog/${slug}`} class="block group-hover:text-accent transition-colors">
+      <h2 class:list={[
+        'font-serif font-semibold leading-snug tracking-tight text-zinc-900 dark:text-zinc-50 mb-2',
+        featured ? 'text-xl sm:text-2xl' : 'text-lg',
+      ]}>
+        {title}
+      </h2>
+    </a>
+
+    <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-2 flex-1">
+      {description}
+    </p>
+
+    <div class="mt-4 flex items-center justify-between">
+      <time class="text-xs text-zinc-400 dark:text-zinc-500" datetime={date.toISOString()}>
+        {formattedDate}
+      </time>
+      <a
+        href={`/blog/${slug}`}
+        class="text-xs text-accent hover:underline font-medium"
+      >
+        Đọc tiếp →
+      </a>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,25 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-zinc-200 dark:border-zinc-800 mt-16">
+  <div class="max-w-content mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <p class="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
+      © {year} herommt · herommt.io.vn
+    </p>
+    <div class="flex items-center gap-4">
+      <a
+        href="/blog"
+        class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+      >
+        Bài viết
+      </a>
+      <a
+        href="/about"
+        class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+      >
+        Về tôi
+      </a>
+    </div>
+  </div>
+</footer>
