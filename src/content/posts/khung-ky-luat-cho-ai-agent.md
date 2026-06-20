@@ -3,7 +3,7 @@ title: "Tôi cấp quyền tối đa cho AI, rồi phải dọn dẹp ba tuần"
 date: 2026-06-17
 tags: ["AI", "Software Engineering", "Workflow", "DevOps"]
 description: "Tại sao prompt hay không giúp AI Agent làm việc tốt hơn. Câu chuyện thiết kế khung kỷ luật cứng bằng code thay vì lời dặn."
-thumbnail: /images/posts/khung-ky-luat-ai-agent.jpg
+thumbnail: /images/posts/hero-vibe-kit.jpg
 draft: false
 ---
 

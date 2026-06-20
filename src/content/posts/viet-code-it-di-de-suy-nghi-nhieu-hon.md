@@ -3,7 +3,7 @@ title: "Copy-paste code 10 lần, sai lần thứ 11 mới phát hiện"
 date: 2023-04-18
 tags: ["Lập trình", "Kiến trúc", "AI", "Trải nghiệm"]
 description: "Hành trình tự xây dựng công cụ sinh mã nguồn từ cơ sở dữ liệu quan hệ cho luận văn thạc sĩ năm 2023, và suy ngẫm về bản chất công việc của một lập trình viên khi làn sóng AI bắt đầu trỗi dậy."
-thumbnail: /images/posts/viet-code-it-di.jpg
+thumbnail: /images/posts/code-generated.jpg
 draft: false
 ---
 
