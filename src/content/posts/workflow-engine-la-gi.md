@@ -1,122 +1,107 @@
 ---
 title: "Tôi từng nghĩ Workflow Engine chỉ là một chuỗi duyệt"
 date: 2024-06-01
-description: "Hành trình từ những dòng code hardcode rẽ nhánh đến tư duy bóc tách quy trình thành dữ liệu và bài học thiết kế hệ thống thích ứng sự thay đổi."
+description: "Hành trình từ những dòng if-else hardcode đến câu hỏi thật sự quan trọng: ai đang giữ quyền kiểm soát quy trình của bạn?"
 tags: ["Workflow", "Kiến trúc", "Lập trình"]
 thumbnail: /images/posts/workflow-engine.svg
 draft: false
 ---
 
-Tôi từng nghĩ Workflow Engine chỉ là một chuỗi duyệt.
+Khách hàng gửi email sáng thứ Hai. Họ muốn thêm một bước duyệt mới vào quy trình mua sắm. Giám đốc tài chính phải ký với đơn hàng trên 10 triệu. Cần xong trước cuối tuần.
 
-Người A duyệt.
-Xong tới người B.
-Rồi người C.
-Hết.
+Tôi nhìn vào code. Rồi nhìn lại email. Rồi nhìn vào code lần nữa.
 
-Tôi từng nghĩ chỉ cần một bảng lưu trạng thái trong database, vài giá trị Enum biểu thị tình trạng duyệt và một ít logic rẽ nhánh if else là đủ.
+Tôi biết mình làm được. Nhưng tôi cũng biết tuần sau sẽ có email khác. Và lần nào cũng vậy: mở IDE, sửa code, chạy test, deploy, rồi lo.
 
-Tôi đã sai ngay từ dự án đầu tiên.
+Đó là lúc tôi nhận ra mình đang là nút thắt trong quy trình của người khác.
 
-## Yêu cầu đơn giản của ngày đầu tiên
+## Ngày đầu mọi thứ có vẻ đơn giản
 
-Hệ thống đầu tiên tôi tham gia xây dựng có quy trình duyệt mua sắm văn phòng phẩm khá đơn giản.
+Hệ thống đầu tiên tôi xây có quy trình duyệt mua sắm văn phòng phẩm. Đơn giản đến mức gần như không cần thiết kế.
 
-Nhân viên tạo yêu cầu.
-Trưởng phòng duyệt.
-Kế toán chi tiền.
-Hoàn thành.
+Nhân viên tạo yêu cầu. Trưởng phòng duyệt. Kế toán chi tiền. Xong.
 
-Tôi viết code rất nhanh. Mỗi bước duyệt ứng với một trạng thái chuyển tiếp cụ thể:
+Tôi viết code nhanh:
 
 ```csharp
-public class ApprovalService
+public void ProcessApproval(PurchaseRequest request, string action)
 {
-    public void ProcessApproval(PurchaseRequest request, string action)
+    if (request.Status == RequestStatus.Draft && action == "Submit")
     {
-        if (request.Status == RequestStatus.Draft && action == "Submit")
-        {
-            request.Status = RequestStatus.PendingManager;
-            request.Assignee = request.CreatedBy.ManagerId;
-        }
-        else if (request.Status == RequestStatus.PendingManager && action == "Approve")
-        {
-            request.Status = RequestStatus.PendingAccountant;
-            request.Assignee = GetAccountantId();
-        }
-        else if (request.Status == RequestStatus.PendingAccountant && action == "Approve")
-        {
-            request.Status = RequestStatus.Completed;
-            request.Assignee = null;
-        }
+        request.Status = RequestStatus.PendingManager;
+        request.Assignee = request.CreatedBy.ManagerId;
     }
-}
-```
-
-Mọi thứ chạy tốt. Tôi tự tin giao việc.
-
-Cho đến khi khách hàng gửi yêu cầu thay đổi đầu tiên:
-
-> Đơn hàng dưới 10 triệu đồng chỉ cần trưởng phòng duyệt.
-> Đơn hàng từ 10 triệu đồng trở lên bắt buộc phải qua giám đốc tài chính duyệt trước khi tới kế toán.
-
-Tôi sửa code, thêm một nhánh kiểm tra số tiền:
-
-```csharp
-if (request.Status == RequestStatus.PendingManager && action == "Approve")
-{
-    if (request.Amount >= 10000000)
-    {
-        request.Status = RequestStatus.PendingDirector;
-        request.Assignee = GetDirectorId();
-    }
-    else
+    else if (request.Status == RequestStatus.PendingManager && action == "Approve")
     {
         request.Status = RequestStatus.PendingAccountant;
         request.Assignee = GetAccountantId();
     }
+    else if (request.Status == RequestStatus.PendingAccountant && action == "Approve")
+    {
+        request.Status = RequestStatus.Completed;
+    }
 }
 ```
 
-Một tuần sau, yêu cầu tiếp theo xuất hiện:
+Mọi thứ chạy tốt. Tôi giao việc, bắt đầu sprint tiếp theo.
 
-> Phòng Kinh doanh đi quy trình duyệt khác.
-> Phòng Nhân sự đi quy trình duyệt khác.
-> Phòng Công nghệ thông tin lại có quy trình duyệt riêng.
+## Những email tiếp theo
 
-Code của tôi bắt đầu phình to. Những câu lệnh if else lồng nhau xuất hiện ngày càng nhiều. 
+Email đầu tiên về thay đổi quy trình đến một tuần sau.
 
-Mỗi lần khách hàng muốn đổi quy trình duyệt, tôi lại phải mở IDE, sửa code, biên dịch, chạy kiểm thử, tạo bản build rồi deploy lên server. Mỗi lần deploy là một lần lo lắng xem những thay đổi mới có vô tình làm hỏng các quy trình cũ đang chạy hay không.
+Đơn hàng dưới 10 triệu chỉ cần trưởng phòng. Đơn hàng trên 10 triệu phải qua giám đốc tài chính.
 
-## Cơn ác mộng mang tên thay đổi
+Tôi sửa trong một buổi sáng. Thêm một điều kiện kiểm tra số tiền, chạy test, deploy.
 
-Tôi nhận ra mình đang đối mặt với một vấn đề lớn. Yêu cầu đỉnh điểm xuất hiện khi khách hàng nói:
+Email thứ hai đến hai tuần sau. Phòng Kinh doanh muốn quy trình duyệt riêng. Phòng Nhân sự cũng vậy. Phòng Công nghệ thông tin lại khác nữa.
 
-> Chúng tôi muốn tự thay đổi các bước duyệt trên giao diện. Quy trình nghiệp vụ của chúng tôi thay đổi liên tục theo quý, không thể mỗi lần đổi lại đợi lập trình viên sửa code.
+Code của tôi bắt đầu phình ra. If-else lồng nhau ngày càng nhiều. Nhưng tôi vẫn nghĩ đây là chuyện bình thường. Yêu cầu thay đổi thì sửa code thôi.
 
-Tôi ngồi nhìn lại đống code rẽ nhánh của mình và nhận ra: Tôi không hề xây dựng một Workflow Engine. Tôi chỉ đang hardcode một quy trình duyệt cụ thể.
+Cho đến khi email tiếp theo đến, lúc tôi đang chuẩn bị demo một tính năng khác:
 
-## Sự khác biệt giữa hệ thống duyệt và Workflow Engine
+> Chúng tôi muốn tự thay đổi các bước duyệt trên giao diện. Quy trình nghiệp vụ của chúng tôi thay đổi theo quý, không thể mỗi lần đổi lại đợi lập trình viên.
 
-Sự khác biệt nằm ở chỗ:
+Tôi đọc xong, đóng laptop lại, ngồi một lúc.
 
-Với hệ thống duyệt hardcode, code sẽ nắm giữ quy trình. Mỗi bước đi, mỗi điều kiện rẽ nhánh đều nằm trong code. Muốn thay đổi quy trình, bắt buộc phải sửa code và deploy lại.
+Nghiệp chướng từ những tháng đầu bắt đầu đòi nợ.
 
-Với Workflow Engine, code hoàn toàn không biết quy trình. Quy trình lúc này nằm ở dữ liệu cấu hình. Engine chỉ là bộ máy trung lập thực hiện nhiệm vụ: đọc cấu hình, đánh giá điều kiện tại thời điểm chạy và chuyển trạng thái.
+## Cái giá thật sự
 
-Để chuyển đổi sang Workflow Engine, tôi chia hệ thống thành ba thành phần độc lập:
+Người ta hay nói code if-else lồng nhau là xấu. Đó không phải vấn đề của tôi lúc đó.
 
-* **Định nghĩa quy trình (Workflow Definition)**: Dữ liệu cấu hình tĩnh mô tả các bước (Steps) và quy tắc chuyển trạng thái (Transitions) kèm điều kiện rẽ nhánh (Conditions). Cấu hình này thường được lưu dưới dạng JSON hoặc XML.
-* **Bộ máy xử lý (Workflow Engine)**: Phần code cốt lõi của hệ thống, không chứa logic của riêng quy trình nào. Engine chỉ đọc cấu hình, đánh giá điều kiện dựa trên dữ liệu thực tế và chuyển trạng thái.
-* **Thực thể chạy (Runtime Instance)**: Thực thể động lưu trạng thái hiện tại (Current Step Id) và dữ liệu nghiệp vụ của lượt chạy đó (như số tiền đơn hàng, người tạo).
+Vấn đề là mỗi lần khách hàng muốn thay đổi quy trình, tôi phải mở IDE, sửa code, chạy test, build, rồi deploy. Mỗi lần deploy là một lần lo xem mình có vô tình làm hỏng quy trình nào đang chạy không.
 
-Dưới đây là sơ đồ mô tả mối quan hệ giữa ba thành phần này:
+Khách hàng thay đổi quy trình là chuyện bình thường của họ. Họ không hiểu tại sao mỗi lần thay đổi lại mất vài ngày và cần lên lịch với dev.
+
+Nhưng tôi cũng không hỏi từ đầu. Tôi chỉ xây cái tôi thấy trước mắt.
+
+## Câu hỏi đúng
+
+Câu hỏi tôi đã hỏi khi bắt đầu dự án: "Quy trình này hoạt động như thế nào?"
+
+Câu hỏi tôi đáng lẽ phải hỏi: "Sáu tháng nữa, ai sẽ thay đổi quy trình này? Và họ sẽ làm bằng cách nào?"
+
+Câu hỏi thứ hai thay đổi mọi thứ.
+
+Nếu câu trả lời là "khách hàng tự thay đổi trên giao diện", thì quy trình không thể nằm trong code. Nó phải nằm trong dữ liệu. Code chỉ là bộ máy đọc và thực thi dữ liệu đó.
+
+Đó là sự khác biệt giữa hai thứ tôi từng nghĩ là một.
+
+## Quy trình trong code và quy trình trong dữ liệu
+
+Hệ thống tôi đã xây: code giữ quy trình. Mỗi bước đi, mỗi điều kiện rẽ nhánh đều nằm trong code. Muốn thay đổi quy trình, phải đổi code.
+
+Workflow Engine: code không biết quy trình. Quy trình nằm trong dữ liệu cấu hình. Engine chỉ đọc cấu hình, đánh giá điều kiện, rồi chuyển trạng thái.
+
+Tôi chia hệ thống thành ba phần tách biệt:
+
+* **Định nghĩa quy trình:** dữ liệu cấu hình mô tả các bước và điều kiện chuyển tiếp. Không chứa logic nghiệp vụ. Chỉ là cấu trúc.
+* **Bộ máy thực thi:** code trung lập, không biết gì về đơn hàng hay số tiền. Chỉ đọc định nghĩa, đánh giá điều kiện, chuyển trạng thái.
+* **Phiên chạy:** lưu trạng thái hiện tại và dữ liệu thực tế của một lượt duyệt cụ thể.
 
 ![Sơ đồ hoạt động của Workflow Engine](/images/posts/workflow-engine.svg)
 
-## Thiết kế một bộ máy linh hoạt
-
-Để hiện thực hóa ý tưởng này bằng C#, tôi thay thế đống code if else lồng nhau bằng một thiết kế hướng cấu hình. Đầu tiên là định nghĩa các cấu trúc dữ liệu cho quy trình:
+Cấu trúc dữ liệu cho định nghĩa quy trình:
 
 ```csharp
 public class WorkflowDefinition
@@ -126,17 +111,11 @@ public class WorkflowDefinition
     public List<WorkflowTransition> Transitions { get; set; } = new();
 }
 
-public class WorkflowStep
-{
-    public string Id { get; set; }
-    public string Role { get; set; }
-}
-
 public class WorkflowTransition
 {
     public string FromStepId { get; set; }
     public string ToStepId { get; set; }
-    public string ConditionExpression { get; set; } // Ví dụ: "Amount >= 10000000"
+    public string ConditionExpression { get; set; } // "Amount >= 10000000"
 }
 
 public class WorkflowInstance
@@ -148,64 +127,51 @@ public class WorkflowInstance
 }
 ```
 
-Tiếp theo, Workflow Engine sẽ chịu trách nhiệm duyệt qua các cấu hình này mà không cần quan tâm chi tiết nghiệp vụ của đơn hàng là gì:
+Bộ máy thực thi không cần biết đơn hàng là gì. Nó chỉ đọc điều kiện từ cấu hình và đánh giá dựa trên dữ liệu thực tế:
 
 ```csharp
-public class WorkflowEngine
+public void Trigger(WorkflowInstance instance, string action)
 {
-    private readonly IWorkflowRepository _repository;
-    private readonly IExpressionEvaluator _evaluator; // Trình biên dịch biểu thức điều kiện
+    var definition = _repository.GetDefinition(instance.DefinitionId);
 
-    public WorkflowEngine(IWorkflowRepository repository, IExpressionEvaluator evaluator)
+    var transitions = definition.Transitions
+        .Where(t => t.FromStepId == instance.CurrentStepId)
+        .ToList();
+
+    foreach (var transition in transitions)
     {
-        _repository = repository;
-        _evaluator = evaluator;
-    }
-
-    public void Trigger(WorkflowInstance instance, string action)
-    {
-        var definition = _repository.GetDefinition(instance.DefinitionId);
-        
-        // Tìm các transition hợp lệ xuất phát từ bước hiện tại
-        var possibleTransitions = definition.Transitions
-            .Where(t => t.FromStepId == instance.CurrentStepId)
-            .ToList();
-
-        foreach (var transition in possibleTransitions)
+        if (!string.IsNullOrEmpty(transition.ConditionExpression))
         {
-            // Nếu có điều kiện, đánh giá điều kiện đó dựa trên dữ liệu của instance
-            if (!string.IsNullOrEmpty(transition.ConditionExpression))
-            {
-                var isMatch = _evaluator.Evaluate(transition.ConditionExpression, instance.Data);
-                if (!isMatch) continue;
-            }
-
-            // Chuyển sang bước tiếp theo
-            instance.CurrentStepId = transition.ToStepId;
-            break;
+            var isMatch = _evaluator.Evaluate(transition.ConditionExpression, instance.Data);
+            if (!isMatch) continue;
         }
+
+        instance.CurrentStepId = transition.ToStepId;
+        break;
     }
 }
 ```
 
-Với cách thiết kế này, nếu ngày mai khách hàng muốn thêm một bước duyệt mới hoặc thay đổi hạn mức tiền từ 10 triệu lên 20 triệu, tôi chỉ cần cập nhật lại bản ghi JSON định nghĩa quy trình trong database. Hệ thống không cần sửa một dòng code nào, không cần build lại và không cần deploy.
+Từ lúc này, khách hàng muốn thêm bước duyệt hoặc thay đổi hạn mức tiền, chỉ cần cập nhật bản ghi JSON trong database. Không cần mở IDE. Không cần build. Không cần deploy.
 
-## Sự đánh đổi và bài học thiết kế
+## Ai giữ quy trình, người đó có quyền
 
-Thiết kế này không phải không có đánh đổi.
+Nhìn lại, tôi thấy sai lầm của mình không phải là viết code xấu.
 
-Khi chuyển dịch từ code cứng sang hướng cấu hình, hệ thống trở nên phức tạp hơn rất nhiều. Việc viết code kiểm thử (unit test) cho toàn bộ các kịch bản duyệt không còn đơn giản là chạy qua các nhánh code. Tôi phải xây dựng thêm các công cụ để kiểm tra tính toàn vẹn của cấu hình JSON, tránh trường hợp quy trình cấu hình bị lặp vô tận hoặc đi vào ngõ cụt mà không có bước thoát. Hiệu năng hệ thống cũng bị ảnh hưởng một phần do phải đọc cấu hình và biên dịch các biểu thức điều kiện động ở mỗi bước duyệt.
+Sai lầm là không hỏi câu hỏi đúng từ đầu.
 
-Nhưng đổi lại, hệ thống có khả năng thích ứng cực kỳ cao.
+Khi quy trình nằm trong code, dev nắm quyền kiểm soát. Mỗi lần nghiệp vụ thay đổi, dev là người bấm nút. Điều đó không chỉ tạo ra nút thắt kỹ thuật, nó tạo ra sự phụ thuộc trong tổ chức. Business không tự chủ được quy trình của chính mình.
 
-Bài học lớn nhất tôi rút ra được sau lần thiết kế lại đó là: Khi đối mặt với một yêu cầu nghiệp vụ phức tạp, câu hỏi đầu tiên lập trình viên cần đặt ra không phải là "Quy trình này hoạt động chi tiết như thế nào?".
+Khi quy trình nằm trong dữ liệu, business tự kiểm soát được. Dev không còn là người gác cổng nữa.
 
-Câu hỏi đúng phải là: "Ai sẽ là người thay đổi quy trình này sau 6 tháng? Họ sẽ thay đổi nó bằng cách nào?".
+Workflow Engine không phải là giải pháp kỹ thuật thuần túy. Nó là cách phân quyền.
 
-Nếu câu trả lời là "lập trình viên phải sửa code", thì rất có thể bạn đang xây dựng một giải pháp ngắn hạn. Bạn giải quyết được bài toán của ngày hôm nay, nhưng gieo mầm cho sự bế tắc của ngày mai.
+Đổi lại, hệ thống phức tạp hơn nhiều. Kiểm thử khó hơn vì không còn chạy qua từng nhánh code nữa mà phải kiểm tra tính toàn vẹn của cấu hình. Hiệu năng cũng chịu ảnh hưởng vì phải đọc và biên dịch điều kiện động ở mỗi bước.
+
+Không phải lúc nào cũng nên làm vậy. Nhưng khi câu trả lời cho câu hỏi "ai thay đổi quy trình?" là "người dùng cuối tự thay đổi", thì đây là hướng không thể tránh.
 
 ---
 
-Mọi hệ thống phần mềm đều phản ánh cách tổ chức vận hành. Nếu quy trình của doanh nghiệp liên tục biến động, kiến trúc phần mềm phải được thiết kế để hấp thụ sự biến động đó thông qua dữ liệu, thay vì cố gắng chống lại nó bằng cách viết thêm code.
+Hệ thống của bạn đang có bao nhiêu quy trình nằm trong code mà lẽ ra nên nằm trong dữ liệu?
 
-Những quy trình duyệt trong hệ thống của bạn hôm nay, nếu ngày mai cần thay đổi, bạn sẽ phải sửa code hay chỉ cần cập nhật một dòng dữ liệu?
+Và ai đang trả giá cho điều đó mỗi lần nghiệp vụ thay đổi?

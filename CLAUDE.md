@@ -1,6 +1,6 @@
 # CLAUDE.md — Blog cá nhân về công nghệ
 
-Đọc `BLOG_STYLE.md` và `BLOG_IDENTITY.md` để hiểu đầy đủ về tác giả và phong cách.
+Đọc `BLOG_STYLE.md`, `BLOG_IDENTITY.md`, và `BLOG_VOICE.md` để hiểu đầy đủ về tác giả, phong cách, và hệ thống metaphor.
 File này chỉ chứa quy tắc làm việc.
 
 ---
@@ -32,6 +32,10 @@ Dừng. Chờ người dùng duyệt.
 
 Chỉ thực hiện sau khi được xác nhận.
 Output: file Markdown hoàn chỉnh, sẵn sàng publish.
+
+**Bước 3 — Humanize tự động**
+
+Sau khi viết xong file, **luôn tự động chạy `/humanizer`** trên bài vừa viết mà không cần người dùng nhắc.
 
 ---
 
